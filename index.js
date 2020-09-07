@@ -63,6 +63,20 @@ bot.on('message', (message) => {
                 break;
         }
     }
+
+    else if(parts[0] == "!add") {
+        console.log("Here ------------");
+        message.channel.overwritePermissions([
+            {
+                id: message.member.id,
+                deny: ['VIEW_CHANNEL'],
+            },
+            {
+                id: message.member.id,
+                allow: ['VIEW_CHANNEL'],
+            },
+        ]);
+    }
 });
 
 // Bot login using key
