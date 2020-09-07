@@ -1,70 +1,79 @@
 // Load environment variables from .env file
-const dotenv = require('dotenv')
+const dotenv = require("dotenv")
 dotenv.config()
 
 // Import Discord Node Module
 const Discord = require("discord.js");
 
-// Define Roles with 'id's
-const Roles = [
-    { 'name': 'Class21', 'id': '735896289711095938' },
-    { 'name': 'Class22', 'id': '735896105660842055' },
-    { 'name': 'Class23', 'id': '735896180084572210' },
-    { 'name': 'Class24', 'id': '735896243393265754' },
-    { 'name': "Intro", 'id': '749708912021733396' }
-];
+/** The prefix that commands use. */
+const commandPrefix = ".";
 
-// Generate role list
-let roles_name_list = [];
-for (let i = 0; i < Roles.length; i++) {
-    roles_name_list.push(Roles[i]['name']);
+/** ID of the Intro to ITWS category channel */
+const itwsCategoryId = "749708689212047490";
+
+// Define Roles with id's
+/** Role names matched to role IDs */
+const roles = {
+    Class21: "735896289711095938",
+    Class22: "735896105660842055",
+    Class23: "735896180084572210",
+    Class24: "735896243393265754",
+    Intro: "749708912021733396"
 }
 
-// Bot object
+/** List of role names */
+const roleListMessage = '**Roles**\n' + Object.keys(roles).join("\n")
+
+/** Message to send for the help command */
+const helpMessage = [
+    '**List of commands:**',
+    '-----------------',
+    `\`${commandPrefix}help\` - bring up this prompt`,
+    `\`${commandPrefix}role roleName\` - add yourself to a role (use \`${commandPrefix}role list\` to recive a direct message with a list of all of the roles`
+].join("\n")
+
+/** Bot object */
 const bot = new Discord.Client();
 
-bot.on('message', (message) => {
-    // Div'id'e input into parts
-    const parts = message.content.split(' ');
+bot.once("ready", () => {
+    console.log(`Bot is ready with command prefix ${commandPrefix}`);
+});
+
+bot.on("message", (message) => {
+    // Ignore non-commands
+    if (!message.content.startsWith(commandPrefix)) return;
+
+    // Divide input into parts
+    // Command will be the first part and args will be the arguments
+    // e.g. "!role ITWS" -> command="!role", args=["ITWS"]
+    let [command, ...args] = message.content.split(" ");
+
+    // Remove command prefix
+    command = command.replace(commandPrefix, "");
 
     // Help command
-    if (parts[0] === "!help") {
-        message.channel.send("**List of commands:** \n----------------------------\n`!help` - bring up this prompt\n`!role` <role> - add yourself to a role (use `!role list` to recive a direct message with a list of all of the roles)")
+    if (command === "help") {
+        message.channel.send(helpMessage);
     }
 
     // Role command
-    else if (parts[0] === "!role") {
-        switch (parts[1]) {
-            case Roles[0]['name'].toString():
-                message.member.roles.add(Roles[0]['id']);
-                message.member.send("Successfully added " + Roles[0]["name"]);
-                break;
-            case Roles[1]['name'].toString():
-                message.member.roles.add(Roles[1]['id']);
-                message.member.send("Successfully added " + Roles[1]["name"]);
-                break;
-            case Roles[2]['name'].toString():
-                message.member.roles.add(Roles[2]['id']);
-                message.member.send("Successfully added " + Roles[2]["name"]);
-                break;
-            case Roles[3]['name'].toString():
-                message.member.roles.add(Roles[3]['id']);
-                message.member.send("Successfully added " + Roles[3]["name"]);
-                break;
-            case Roles[4]['name'].toString():
-                message.member.roles.add(Roles[4]['id']);
-                message.member.send("Successfully added " + Roles[4]["name"]);
-                break;
-            case "list":
-                message.member.send(roles_name_list);
-                break;
-            default:
-                message.channel.send("Invalid input");
-                break;
+    else if (command === "role") {
+        const desiredRoleName = args[0]
+
+        if (desiredRoleName == "list") {
+            // List all roles
+            message.member.send(roleListMessage);
+        } else if (desiredRoleName in roles) {
+            // User chose a valid role
+            message.member.roles.add(roles[desiredRoleName])
+        } else {
+            // User chose an invalid role
+            message.channel.send("That's not a valid role!");
         }
     }
 
-    else if(parts[0] == "!add") {
+    // Add command
+    else if (command == "add") {
         console.log("Here ------------");
         message.channel.overwritePermissions([
             {
@@ -76,6 +85,79 @@ bot.on('message', (message) => {
                 allow: ['VIEW_CHANNEL'],
             },
         ]);
+    } /*else if (command == "generate") {
+        for (let team = 1; team <= 19; team++) {
+            const textChannelName = "team-" + team;
+            const voiceChannelName = "Team " + team;
+
+            // Create text-channel
+            message.guild.channels.create(textChannelName, {
+                parent: itwsCategoryId,
+                type: "text",
+                topic: "Private discussion channel for Team " + team,
+                permissionOverwrites: [
+                    {
+                        id: message.guild.roles.everyone,
+                        type: "role",
+                        deny: "VIEW_CHANNEL"
+                    }
+                ]
+            })
+
+            message.guild.channels.create(voiceChannelName, {
+                parent: itwsCategoryId,
+                type: "voice",
+                permissionOverwrites: [
+                    {
+                        id: message.guild.roles.everyone,
+                        type: "role",
+                        deny: ["CONNECT", "VIEW_CHANNEL"]
+                    }
+                ]
+            })
+        }
+    }*/ else if (command == "team") {
+        const team = parseInt(args[0])
+
+        // Validate team input
+        if (team == NaN) {
+            message.channel.send("That's not a valid team number!");
+            return;
+        }
+
+        // Find the team channels
+        const teamTextChannel = message.guild.channels.cache.get(itwsCategoryId).children.find(channel => channel.name === "team-" + team && channel.type == "text");
+        const teamVoiceChannel = message.guild.channels.cache.get(itwsCategoryId).children.find(channel => channel.name === "Team " + team && channel.type == "voice");
+
+        // If either doesn't exist, quit
+        if (!teamTextChannel || !teamVoiceChannel) {
+            message.channel.send("Your team channels haven't been created yet. We'll add them shortly.");
+            return;
+        }
+
+        // Wait for both channel overrides to complete
+        Promise.all([
+            teamTextChannel.overwritePermissions([
+                {
+                    id: message.author.id,
+                    allow: ["VIEW_CHANNEL"]
+                }
+            ], "Added to team text channel"),
+            teamVoiceChannel.overwritePermissions([
+                {
+                    id: message.author.id,
+                    allow: ["CONNECT", "VIEW_CHANNEL"]
+                }
+            ], "Added to team voice channel")
+        ])
+            .then(() => {
+                // Send success DM with link to text channel
+                message.member.send("Added you to your team channels! " + teamTextChannel.toString());
+            })
+            .catch(error => {
+                console.error(error);
+                message.channel.send("Failed to add you to that team... We'll look into the issue!")
+            })
     }
 });
 
