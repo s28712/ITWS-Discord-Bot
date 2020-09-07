@@ -8,6 +8,9 @@ const Discord = require("discord.js");
 /** The prefix that commands use. */
 const commandPrefix = ".";
 
+/** ID of the Intro to ITWS category channel */
+const itwsCategoryId = "749708689212047490";
+
 // Define Roles with id's
 /** Role names matched to role IDs */
 const roles = {
@@ -82,6 +85,79 @@ bot.on("message", (message) => {
                 allow: ['VIEW_CHANNEL'],
             },
         ]);
+    } /*else if (command == "generate") {
+        for (let team = 1; team <= 19; team++) {
+            const textChannelName = "team-" + team;
+            const voiceChannelName = "Team " + team;
+
+            // Create text-channel
+            message.guild.channels.create(textChannelName, {
+                parent: itwsCategoryId,
+                type: "text",
+                topic: "Private discussion channel for Team " + team,
+                permissionOverwrites: [
+                    {
+                        id: message.guild.roles.everyone,
+                        type: "role",
+                        deny: "VIEW_CHANNEL"
+                    }
+                ]
+            })
+
+            message.guild.channels.create(voiceChannelName, {
+                parent: itwsCategoryId,
+                type: "voice",
+                permissionOverwrites: [
+                    {
+                        id: message.guild.roles.everyone,
+                        type: "role",
+                        deny: ["CONNECT", "VIEW_CHANNEL"]
+                    }
+                ]
+            })
+        }
+    }*/ else if (command == "team") {
+        const team = parseInt(args[0])
+
+        // Validate team input
+        if (team == NaN) {
+            message.channel.send("That's not a valid team number!");
+            return;
+        }
+
+        // Find the team channels
+        const teamTextChannel = message.guild.channels.cache.get(itwsCategoryId).children.find(channel => channel.name === "team-" + team && channel.type == "text");
+        const teamVoiceChannel = message.guild.channels.cache.get(itwsCategoryId).children.find(channel => channel.name === "Team " + team && channel.type == "voice");
+
+        // If either doesn't exist, quit
+        if (!teamTextChannel || !teamVoiceChannel) {
+            message.channel.send("Your team channels haven't been created yet. We'll add them shortly.");
+            return;
+        }
+
+        // Wait for both channel overrides to complete
+        Promise.all([
+            teamTextChannel.overwritePermissions([
+                {
+                    id: message.author.id,
+                    allow: ["VIEW_CHANNEL"]
+                }
+            ], "Added to team text channel"),
+            teamVoiceChannel.overwritePermissions([
+                {
+                    id: message.author.id,
+                    allow: ["CONNECT", "VIEW_CHANNEL"]
+                }
+            ], "Added to team voice channel")
+        ])
+            .then(() => {
+                // Send success DM with link to text channel
+                message.member.send("Added you to your team channels! " + teamTextChannel.toString());
+            })
+            .catch(error => {
+                console.error(error);
+                message.channel.send("Failed to add you to that team... We'll look into the issue!")
+            })
     }
 });
 
