@@ -6,7 +6,7 @@ dotenv.config()
 const Discord = require("discord.js");
 
 /** The prefix that commands use. */
-const commandPrefix = ".";
+const commandPrefix = "!";
 
 /** ID of the Intro to ITWS category channel */
 const itwsCategoryId = "749708689212047490";
@@ -70,21 +70,6 @@ bot.on("message", (message) => {
             // User chose an invalid role
             message.channel.send("That's not a valid role!");
         }
-    }
-
-    // Add command
-    else if (command == "add") {
-        console.log("Here ------------");
-        message.channel.overwritePermissions([
-            {
-                id: message.member.id,
-                deny: ['VIEW_CHANNEL'],
-            },
-            {
-                id: message.member.id,
-                allow: ['VIEW_CHANNEL'],
-            },
-        ]);
     } /*else if (command == "generate") {
         for (let team = 1; team <= 19; team++) {
             const textChannelName = "team-" + team;
@@ -126,8 +111,9 @@ bot.on("message", (message) => {
         }
 
         // Find the team channels
-        const teamTextChannel = message.guild.channels.cache.get(itwsCategoryId).children.find(channel => channel.name === "team-" + team && channel.type == "text");
-        const teamVoiceChannel = message.guild.channels.cache.get(itwsCategoryId).children.find(channel => channel.name === "Team " + team && channel.type == "voice");
+        const categoryChannels = message.guild.channels.cache.get(itwsCategoryId).children;
+        const teamTextChannel = categoryChannels.find(channel => channel.name === "team-" + team && channel.type == "text");
+        const teamVoiceChannel = categoryChannels.find(channel => channel.name === "Team " + team && channel.type == "voice");
 
         // If either doesn't exist, quit
         if (!teamTextChannel || !teamVoiceChannel) {
@@ -137,22 +123,17 @@ bot.on("message", (message) => {
 
         // Wait for both channel overrides to complete
         Promise.all([
-            teamTextChannel.overwritePermissions([
-                {
-                    id: message.author.id,
-                    allow: ["VIEW_CHANNEL"]
-                }
-            ], "Added to team text channel"),
-            teamVoiceChannel.overwritePermissions([
-                {
-                    id: message.author.id,
-                    allow: ["CONNECT", "VIEW_CHANNEL"]
-                }
-            ], "Added to team voice channel")
+            teamTextChannel.updateOverwrite(message.author.id, {
+                VIEW_CHANNEL: true
+            }, "Added to team text channel"),
+            teamVoiceChannel.updateOverwrite(message.author.id, {
+                VIEW_CHANNEL: true,
+                CONNECT: true
+            }, "Added to team voice channel")
         ])
             .then(() => {
                 // Send success DM with link to text channel
-                message.member.send("Added you to your team channels! " + teamTextChannel.toString());
+                message.member.send("Added you to your team channels! " + teamTextChannel.toString() + " Let a moderator know if you put the wrong team.");
             })
             .catch(error => {
                 console.error(error);
