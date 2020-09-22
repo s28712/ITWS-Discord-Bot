@@ -15,13 +15,7 @@ const itwsCategoryId = "749708689212047490";
 
 // Define Roles with id's
 /** Role names matched to role IDs */
-const roles = {
-    // Class21: "735896289711095938",
-    // Class22: "735896105660842055",
-    // Class23: "735896180084572210",
-    // Class24: "735896243393265754",
-    // Intro: "749708912021733396"
-}
+const roles = {};
 
 /** List of role names */
 const roleListMessage = "**Roles**\n" + Object.keys(roles).join("\n")
@@ -55,7 +49,7 @@ bot.once("ready", async () => {
         roles['Team' + team] = getRoleByName('Intro Team ' + team).id;
     }
 
-    console.log(roles);
+    // console.log(roles);
 });
 
 bot.on("message", (message) => {
@@ -89,7 +83,7 @@ bot.on("message", (message) => {
             // User chose an invalid role
             message.channel.send("That's not a valid role!");
         }
-    } else if (command == "teamrolegenerate") {
+    } /*else if (command == "teamrolegenerate") {
         for (let team = 3; team <= 19; team++) {
             message.guild.roles.create({
                 data: {
@@ -98,7 +92,7 @@ bot.on("message", (message) => {
                 }
             })
         }
-    } /*else if (command == "team") {
+    } else if (command == "team") {
         const team = parseInt(args[0])
 
         // Validate team input
