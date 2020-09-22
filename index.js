@@ -17,9 +17,6 @@ const itwsCategoryId = "749708689212047490";
 /** Role names matched to role IDs */
 const roles = {};
 
-/** List of role names */
-const roleListMessage = "**Roles**\n" + Object.keys(roles).join("\n")
-
 /** Message to send for the help command */
 const helpMessage = [
     "**List of commands:**",
@@ -75,7 +72,7 @@ bot.on("message", (message) => {
 
         if (desiredRoleName == "list") {
             // List all roles
-            message.member.send(roleListMessage);
+            message.member.send("**Roles**\n" + Object.keys(roles).join("\n"));
         } else if (desiredRoleName in roles) {
             // User chose a valid role
             message.member.roles.add(roles[desiredRoleName])
