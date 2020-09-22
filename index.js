@@ -8,26 +8,28 @@ const Discord = require("discord.js");
 /** The prefix that commands use. */
 const commandPrefix = "!";
 
+const itwsServerId = "735867785879748709";
+
 /** ID of the Intro to ITWS category channel */
 const itwsCategoryId = "749708689212047490";
 
 // Define Roles with id's
 /** Role names matched to role IDs */
 const roles = {
-    Class21: "735896289711095938",
-    Class22: "735896105660842055",
-    Class23: "735896180084572210",
-    Class24: "735896243393265754",
-    Intro: "749708912021733396"
+    // Class21: "735896289711095938",
+    // Class22: "735896105660842055",
+    // Class23: "735896180084572210",
+    // Class24: "735896243393265754",
+    // Intro: "749708912021733396"
 }
 
 /** List of role names */
-const roleListMessage = '**Roles**\n' + Object.keys(roles).join("\n")
+const roleListMessage = "**Roles**\n" + Object.keys(roles).join("\n")
 
 /** Message to send for the help command */
 const helpMessage = [
-    '**List of commands:**',
-    '-----------------',
+    "**List of commands:**",
+    "-----------------",
     `\`${commandPrefix}help\` - bring up this prompt`,
     `\`${commandPrefix}role roleName\` - add yourself to a role (use \`${commandPrefix}role list\` to recive a direct message with a list of all of the roles`
 ].join("\n")
@@ -35,8 +37,25 @@ const helpMessage = [
 /** Bot object */
 const bot = new Discord.Client();
 
-bot.once("ready", () => {
+function getRoleByName(roleName) {
+    return bot.guilds.cache.get(itwsServerId).roles.cache.find(role => role.name === roleName)
+}
+
+bot.once("ready", async () => {
     console.log(`Bot is ready with command prefix ${commandPrefix}`);
+
+    // Setup roles by name
+    roles['Intro'] = getRoleByName('Intro to ITWS').id;
+
+    for (let gradYear = 21; gradYear <= 24; gradYear++) {
+        roles['Class' + gradYear] = getRoleByName('Class of 20' + gradYear).id;
+    }
+
+    for (let team = 1; team <= 19; team++) {
+        roles['Team' + team] = getRoleByName('Intro Team ' + team).id;
+    }
+
+    console.log(roles);
 });
 
 bot.on("message", (message) => {
@@ -70,38 +89,16 @@ bot.on("message", (message) => {
             // User chose an invalid role
             message.channel.send("That's not a valid role!");
         }
-    } /*else if (command == "generate") {
-        for (let team = 1; team <= 19; team++) {
-            const textChannelName = "team-" + team;
-            const voiceChannelName = "Team " + team;
-
-            // Create text-channel
-            message.guild.channels.create(textChannelName, {
-                parent: itwsCategoryId,
-                type: "text",
-                topic: "Private discussion channel for Team " + team,
-                permissionOverwrites: [
-                    {
-                        id: message.guild.roles.everyone,
-                        type: "role",
-                        deny: "VIEW_CHANNEL"
-                    }
-                ]
-            })
-
-            message.guild.channels.create(voiceChannelName, {
-                parent: itwsCategoryId,
-                type: "voice",
-                permissionOverwrites: [
-                    {
-                        id: message.guild.roles.everyone,
-                        type: "role",
-                        deny: ["CONNECT", "VIEW_CHANNEL"]
-                    }
-                ]
+    } else if (command == "teamrolegenerate") {
+        for (let team = 3; team <= 19; team++) {
+            message.guild.roles.create({
+                data: {
+                    name: "Intro Team " + team,
+                    mentionable: true
+                }
             })
         }
-    }*/ else if (command == "team") {
+    } /*else if (command == "team") {
         const team = parseInt(args[0])
 
         // Validate team input
@@ -139,7 +136,7 @@ bot.on("message", (message) => {
                 console.error(error);
                 message.channel.send("Failed to add you to that team... We'll look into the issue!")
             })
-    }
+    }*/
 });
 
 // Bot login using key
